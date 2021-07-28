@@ -1,0 +1,19 @@
+
+<resources>
+
+    <declare-styleable name="GraphChart">
+        <attr name="leftMargin" format="dimension"/>
+        <attr name="topMargin" format="dimension"/>
+        <attr name="rightMargin" format="dimension"/>
+        <attr name="bottomMargin" format="dimension"/>
+        <attr name="barWidth" format="dimension"/>
+
+        <attr name="graphBackColor" format="color"/>
+        <attr name="graphComponentBackColor" format="color"/>
+        <attr name="boxColor" format="color"/>
+        <attr name="textColor" format="color"/>
+        <attr name="graphColor" format="integer"/>
+    </declare-styleable>
+
+
+</resources>

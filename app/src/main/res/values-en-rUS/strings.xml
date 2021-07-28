@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">StockReport</string>
+    <string name="Stock_Data">Stock Data</string>
+    <string name="stock_list">List of stocks</string>
+    <string name="Data_for_stock">Data for stock</string>
+    <string name="Looking_for_stock_data">"Looking for stock data "</string>
+    <string name="BAR_GRAPH">BAR GRAPH</string>
+    <string name="LINE_GRAPH">LINE GRAPH</string>
+    <string name="AREA_GRAPH">AREA GRAPH</string>
+    <string name="Refreshed">Refreshed</string>
+    <string name="Company_name">Company name</string>
+</resources>
