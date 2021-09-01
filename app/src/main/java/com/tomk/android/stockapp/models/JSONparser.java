@@ -66,7 +66,7 @@ public class JSONparser {
         String intervalString = intervalStringWithUnit.replaceAll("min", "");
         Integer intervalInteger = Integer.parseInt(intervalString);
         for (Iterator<String> tsIterator = tsKeys; tsIterator.hasNext(); ) {
-            if (cnt > MainActivity.DATA_POINTS_NUM) break;
+            if (cnt >= MainActivity.DATA_POINTS_NUM) break;
             String tsKey = tsIterator.next();
             JSONObject timeSeriesJsonObjectItem = new JSONObject(timeSeries.get(tsKey).toString());
 

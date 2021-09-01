@@ -1,5 +1,7 @@
 package com.tomk.android.stockapp;
 
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -7,10 +9,14 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
+import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Display;
@@ -21,7 +27,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -36,6 +44,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashMap;
+import java.util.Set;
 
 /**
  * Created by Tom Kowszun on 11/10/2017.
@@ -43,13 +52,17 @@ import java.util.LinkedHashMap;
 
 public class MainActivity extends AppCompatActivity implements ActivityCompat.OnRequestPermissionsResultCallback, android.support.v4.app.LoaderManager.LoaderCallbacks {
 
-    public static final int DATA_POINTS_NUM = 50;
+    public static final int DATA_POINTS_NUM = 10;
 
     public static final String STOCK_SYMBOL = "stockSymbol";
     public static final String INTERVAL = "interval";
     public static final String OUTPUT_SIZE = "outputSize";
     public static final String SERIES_TYPE = "seriesType";
     public static final String API_KEY_OBTAINED = "apiKeyObtained";
+
+
+    // Stock symbol like: IBM, AAPL, etc.
+    public static String STOCK_SYMBOL_VAL = "stockSymbol";
 
     // 1min, 5min, 15min, 30min, 60min
     public static final String INTERVAL_VAL = "60min";
@@ -59,7 +72,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     // open
     public static final String SERIES_TYPE_VAL = "seriesType";
     // UKY832CIXXPKWVJV
-    public static final String API_KEY_OBTAINED_VAL = "apiKeyObtained";
+    public static String API_KEY_OBTAINED_VAL = "apiKeyObtained";
 
     private StockDbAdapter stockDbAdapter;
     private StockListRVadapter stockListRVadapter;
@@ -68,9 +81,10 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     private Button barGraphButton;
     private Button lineGraphButton;
     private Button areaGraphButton;
+    private Button candleStickGraphButton;
     private android.support.v7.widget.AppCompatTextView refreshed;
 
-    private static final String TAG = "MyActivity";
+    private static final String TAG = "MainActivity";
     private static final String DEFAULT_STOCK = "IBM";
     public static final String STOCK_NOT_FOUND = "Stock Not Found";
     public static final String ERROR_CONNECTING = "Error Connecting";
@@ -103,6 +117,16 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
     private LinearLayout companyOverviewLayout = null;
     private TextView companyName = null;
 
+    boolean isFABOpen = false;
+    FloatingActionButton fab1;
+    FloatingActionButton fab2;
+    FloatingActionButton fab3;
+
+    LinearLayout fab3Lay;
+    LinearLayout fab2Lay;
+    LinearLayout fab1Lay;
+
+    private ListView userNameListView = null;
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -141,10 +165,79 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         super.onCreate(savedInstanceState);
         this.deleteDatabase(StockDbAdapter.DATABASE_NAME);
 
+        BluetoothAdapter bAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bAdapter == null) {
+            // Device won't support Bluetooth
+        } else {
+
+            Set<BluetoothDevice> pairedDevices = bAdapter.getBondedDevices();
+            ArrayList list = new ArrayList();
+            if (pairedDevices.size() > 0) {
+                for (BluetoothDevice device : pairedDevices) {
+                    String devicename = device.getName();
+                    String macAddress = device.getAddress();
+
+                    System.out.println("==================== Name: " + devicename + " MAC Address: " + macAddress);
+
+                }
+                ;
+            }
+        }
+
         stockDbAdapter = new StockDbAdapter(this.getApplicationContext());
         stockDbAdapter.open();
 
         setContentView(R.layout.activity_main);
+
+
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+
+        fab1 = (FloatingActionButton) findViewById(R.id.fab1);
+        fab2 = (FloatingActionButton) findViewById(R.id.fab2);
+        fab3 = (FloatingActionButton) findViewById(R.id.fab3);
+        fab1.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.w(TAG, "======== FAB 1 clicked");
+            }
+        });
+
+        fab2.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.w(TAG, "======== FAB 2 clicked");
+                showFabDialog(2);
+            }
+        });
+
+        fab3.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Log.w(TAG, "======== FAB 3 clicked");
+                showFabDialog(1);
+            }
+        });
+
+
+        fab3Lay = findViewById(R.id.fab3_lay);
+        fab2Lay = findViewById(R.id.fab2_lay);
+        fab1Lay = findViewById(R.id.fab1_lay);
+
+
+        fab1Lay.setVisibility(View.INVISIBLE);
+        fab2Lay.setVisibility(View.INVISIBLE);
+        fab3Lay.setVisibility(View.INVISIBLE);
+
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (!isFABOpen) {
+                    showFABMenu();
+                } else {
+                    closeFABMenu();
+                }
+            }
+        });
 
 
         companyOverviewLayout = findViewById(R.id.company_overview_layout);
@@ -222,6 +315,15 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
             }
         });
 
+        candleStickGraphButton = findViewById(R.id.candle_graph);
+        candleStickGraphButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                graphDisplayType = GraphChart.CANDLE_STICK_GRAPH;
+                MainActivity.this.graphChart.changeGraphType(graphDisplayType);
+            }
+        });
+
         // Height of the graph in percent of the total device height
         int heightInPercent = 20;
         int graphHeight = calculatePercentageHeight(heightInPercent);
@@ -232,6 +334,20 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         setHomeDisplay(true);
         refreshed = findViewById(R.id.refreshed);
         onItemSelected(nameOfTheStockEntered);
+    }
+
+    private void showFABMenu() {
+        isFABOpen = true;
+        fab1Lay.setVisibility(View.VISIBLE);
+        fab2Lay.setVisibility(View.VISIBLE);
+        fab3Lay.setVisibility(View.VISIBLE);
+    }
+
+    private void closeFABMenu() {
+        isFABOpen = false;
+        fab1Lay.setVisibility(View.INVISIBLE);
+        fab2Lay.setVisibility(View.INVISIBLE);
+        fab3Lay.setVisibility(View.INVISIBLE);
     }
 
     private int calculatePercentageHeight(int desiredPercentage) {
@@ -345,7 +461,7 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
                 viewHolder.itemValueTV.setText(companyOverviewMap.get("_52WeekHigh"));
             } else if (position == 2) {
                 viewHolder.itemNameTV.setText("52 week low ");
-                viewHolder.itemValueTV.setText(companyOverviewMap.get("_52WeekHigh"));
+                viewHolder.itemValueTV.setText(companyOverviewMap.get("_52WeekLow"));
             } else if (position == 3) {
                 viewHolder.itemNameTV.setText("50 day moving average");
                 viewHolder.itemValueTV.setText(companyOverviewMap.get("_50DayMovingAverage"));
@@ -474,13 +590,11 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
 
         DataRepository dataRepo = new DataRepository();
         String stockName = null;
-        for (RepositoryItem i : dataRepo.getRepository())
-        {
+        for (RepositoryItem i : dataRepo.getRepository()) {
             RepositoryItem item = i;
-            if(item.getStockSymbol().equals(stockSymbol))
-            {
+            if (item.getStockSymbol().equals(stockSymbol)) {
                 stockName = item.getStockName();
-                companyName.setText(getResources().getString(R.string.Company_name) +  ": " + stockName);
+                companyName.setText(getResources().getString(R.string.Company_name) + ": " + stockName);
             }
         }
 
@@ -519,6 +633,76 @@ public class MainActivity extends AppCompatActivity implements ActivityCompat.On
         super.onPause();
         progressBar.setVisibility(View.INVISIBLE);
         unregisterReceiver(stockReceiver);
+    }
+
+    private void showFabDialog(final int dialogVersion) {
+
+        AlertDialog.Builder alertDialogBuilder = new AlertDialog.Builder(MainActivity.this);
+        alertDialogBuilder.setIcon(R.drawable.ic_baseline_settings_24);
+//        alertDialogBuilder.setCancelable(false);
+        LayoutInflater layoutInflater = LayoutInflater.from(MainActivity.this);
+        View dialogView = null;
+
+        if(dialogVersion == 1)
+        {
+            alertDialogBuilder.setTitle("Enter API key");
+            dialogView = layoutInflater.inflate(R.layout.enter_api_key_dialog, null);
+        } else if (dialogVersion == 2)
+        {
+            alertDialogBuilder.setTitle("Enter stock symbol");
+            dialogView = layoutInflater.inflate(R.layout.enter_stock_symbol_dialog, null);
+        } else
+        {
+
+        }
+
+        alertDialogBuilder.setView(dialogView);
+        final AlertDialog alertDialog = alertDialogBuilder.create();
+        alertDialog.show();
+
+        Button saveButton = dialogView.findViewById(R.id.button_save);
+        final View finalDialogView = dialogView;
+        saveButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+
+                EditText editText = finalDialogView.findViewById(R.id.edit_input_text);
+                String inputString = editText.getText().toString();
+                if (TextUtils.isEmpty(inputString)) {
+                    // If apiKey is empty then popup a snackbar.
+                    Snackbar.make(v, "API key can not be empty.",
+                            Snackbar.LENGTH_LONG).setAction("Action", null).show();
+                } else {
+                    if(dialogVersion == 1)
+                    {
+                        API_KEY_OBTAINED_VAL = inputString;
+                    } else if (dialogVersion == 2)
+                    {
+                        STOCK_SYMBOL_VAL = inputString;
+
+                        Log.d(TAG, "Saving symbol to SharedPreferences");
+                        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                        SharedPreferences.Editor editor = preferences.edit();
+                        editor.putString("stockNameKey", inputString);
+                        editor.apply();
+
+                        onItemSelected(inputString);
+                        alertDialog.cancel();
+                    } else
+                    {
+
+                    }
+                }
+            }
+        });
+
+        Button cancelApiKeyButton = dialogView.findViewById(R.id.button_cancel);
+        cancelApiKeyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                alertDialog.cancel();
+            }
+        });
     }
 
     public class StockReceiver extends BroadcastReceiver {

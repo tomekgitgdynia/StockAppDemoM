@@ -17,7 +17,7 @@
     <RelativeLayout
         android:id="@+id/main_relative_layout"
         style="@style/MainPanel"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content">
 
 
@@ -41,8 +41,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginLeft="10dp"
+                android:layout_marginRight="10dp"
                 android:layout_marginBottom="0dp"
-                android:background="@color/background_color"
+                android:background="#3D3D3D"
                 android:paddingLeft="20dp"
                 android:paddingTop="10dp"
                 android:paddingRight="20dp"
@@ -81,6 +82,15 @@
                     android:layout_marginRight="5dp"
                     android:textSize="9sp"
                     android:text="@string/AREA_GRAPH" />
+
+                <android.support.v7.widget.AppCompatButton
+                    android:id="@+id/candle_graph"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="5dp"
+                    android:layout_marginRight="5dp"
+                    android:textSize="9sp"
+                    android:text="@string/Candle_Graph" />
 
 
             </LinearLayout>
@@ -131,6 +141,111 @@
 
         </FrameLayout>
 
+        <LinearLayout
+            android:id="@+id/fabs"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true"
+            >
+
+
+
+        <LinearLayout
+            android:id="@+id/fab3_lay"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_gravity="end"
+            android:layout_alignParentRight="true"
+            android:layout_alignParentBottom="true">
+
+            <android.support.v7.widget.AppCompatTextView
+                android:id="@+id/fab3_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@android:color/holo_green_light"
+                android:text="@string/Enter_api_kay"
+                android:textSize="20sp" />
+
+            <android.support.design.widget.FloatingActionButton
+                android:id="@+id/fab3"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:fabSize="mini"
+                android:layout_gravity="end"
+                android:layout_margin="10dp"
+                app:srcCompat="@android:drawable/ic_btn_speak_now" />
+        </LinearLayout>
+
+
+
+
+            <LinearLayout
+                android:id="@+id/fab2_lay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="end"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true">
+
+                <android.support.v7.widget.AppCompatTextView
+                    android:id="@+id/fab2_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/holo_green_light"
+                    android:text="@string/Enter_stock_symbol"
+                    android:textSize="20sp" />
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/fab2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:fabSize="mini"
+                    android:layout_gravity="end"
+                    android:layout_margin="10dp"
+                    app:srcCompat="@android:drawable/ic_btn_speak_now" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/fab1_lay"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_gravity="end"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentBottom="true">
+
+                <android.support.v7.widget.AppCompatTextView
+                    android:id="@+id/fab1_label"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/holo_green_light"
+                    android:text="@string/Save_in_database"
+                    android:textSize="20sp" />
+
+                <android.support.design.widget.FloatingActionButton
+                    android:id="@+id/fab1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    app:fabSize="mini"
+                    android:layout_gravity="end"
+                    android:layout_margin="10dp"
+                    app:srcCompat="@android:drawable/ic_btn_speak_now" />
+            </LinearLayout>
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/fab"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:fabSize="normal"
+            android:layout_gravity="end"
+            android:layout_margin="@dimen/fab_margin"
+            app:srcCompat="@drawable/ic_baseline_settings_24" />
+        </LinearLayout>
+
         <ProgressBar
             android:id="@+id/pbLoading"
             android:layout_width="wrap_content"
@@ -139,6 +254,7 @@
             android:visibility="visible" />
 
     </RelativeLayout>
+
 
 
 </LinearLayout>

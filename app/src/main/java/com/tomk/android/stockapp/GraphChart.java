@@ -3,6 +3,7 @@ package com.tomk.android.stockapp;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.Path;
@@ -34,10 +35,9 @@ public class GraphChart extends ViewGroup {
 
     public static double MaxValueDisplay = Double.MIN_VALUE;
     public static double MinValueDisplay = Double.MAX_VALUE;
-    public static double MaxValueReal = Double.MIN_VALUE;
     public static int MaxDigitsAllowed = 6;
-    public static final int VertNumberOfTicks = 3;
-    public static final int boxLineThicknessStat = 2;
+    public static final int VertNumberOfTicks = 4;
+    public static final int boxLineThicknessStat = 1;
 
     private List<ChartItem> graphItems = new ArrayList<ChartItem>();
 
@@ -58,12 +58,12 @@ public class GraphChart extends ViewGroup {
     private final int tickYaxisOffset = 0;
     private final int textYaxisOffset = 20;
 
-    private final int approximateCharacterWidth = 13;
+    private final float approximateCharacterWidth = 2.5f;
     float leftMargin = 10;
     final float rightMargin = 20;
     final float bottomMargin = 10;
     final float topMargin = 0;
-    final float barWidth = 10;
+    final float barWidth = 20;
     final float minMarginSize = 20;
     int numLeftMinorTicks = 20;
     final int numBottomTicks = 5;
@@ -78,9 +78,10 @@ public class GraphChart extends ViewGroup {
     // Graph display types
     public static final int BAR_GRAPH = 1;
     public static final int LINEAR_GRAPH = 2;
-    public static final int POINT_GRAPH = 3;
+    public static final int CANDLE_STICK_GRAPH = 3;
     public static final int FILL_GRAPH = 4;
     public static final int MINOR_GRAPH = 5;
+
     public static int graphDisplayType = GraphChart.LINEAR_GRAPH;
 
     // Data used to plot graph
@@ -90,6 +91,10 @@ public class GraphChart extends ViewGroup {
     public static final int USE_LOW = 4;
     public static final int USE_VOLUME = 5;
     public static final int graphDataUsed = GraphChart.USE_OPEN;
+
+    public static final int upMarket = 1;
+    public static final int downMarket = 2;
+
 
     private static final String TAG = "GraphChart";
 
@@ -114,7 +119,6 @@ public class GraphChart extends ViewGroup {
             int boxElementsColor = ContextCompat.getColor(getContext(), android.R.color.primary_text_dark);
 
             graphColor = ContextCompat.getColor(getContext(), android.R.color.holo_green_light);
-
 
 
             boxPaint.setColor(boxElementsColor);
@@ -164,11 +168,9 @@ public class GraphChart extends ViewGroup {
 
         if (graphItems != null && graphItems.size() > 0) {
 
-            if(graphDisplayType == MINOR_GRAPH)
-            {
+            if (graphDisplayType == MINOR_GRAPH) {
 
-            } else
-            {
+            } else {
                 // draw the bottom tick marks with numbers
                 paintBottomNumbersAndTics(canvas, numBottomTicks);
 
@@ -176,13 +178,12 @@ public class GraphChart extends ViewGroup {
                 paintLeftNumbersAndTics(canvas, GraphChart.VertNumberOfTicks);
 
                 // draw the graph box that forms the border of the graph
-//            canvas.drawRect(graphChartBounds, boxPaint);
+                canvas.drawRect(graphChartBounds, boxPaint);
             }
 
         }
 
     }
-
 
     private void paintLeftNumbersAndTics(Canvas canvas, int numOfTics) {
 
@@ -238,7 +239,7 @@ public class GraphChart extends ViewGroup {
             Log.d(TAG, " \n --------------->>> numberOfDataPoints  = " + numberOfDataPoints);
             leftMargin = String.valueOf(GraphChart.MaxValueDisplay).length() * approximateCharacterWidth;
             if (leftMargin < minMarginSize) leftMargin = minMarginSize;
-            double xCoordScale = ((graphChartBounds.width() - boxLineThickness) / (numOfTics - 1));
+            double xCoordScale = ((graphChartBounds.width() - boxLineThickness - barWidth) / (numOfTics - 1));
 
             int ticStep = numberOfDataPoints / numOfTics;
             int yOrig = boxLineThickness / 2;
@@ -259,52 +260,127 @@ public class GraphChart extends ViewGroup {
     }
 
     /**
-     * Do all of the recalculations needed when the data array changes.
-     * <p>
-     * In this method the existing chart item values are recalculated
+     * Extracts individual data items from the stockResponse and converts them to ChartItems
+     * that are then drawn directly in the onDraw() method of the GraphChartView class
+     *
+     * In this method the existing chart item values are calculated
      * to reflect changed itemValue
      */
-    private void recalculateGraph() {
+    private List<ChartItem>  recalculateGraph(StockResponse stockResponse) {
 
         MaxValueDisplay = Double.MIN_VALUE;
         MinValueDisplay = Double.MAX_VALUE;
-        MaxValueReal = Double.MIN_VALUE;
 
-        if (graphItems == null) return;
-        for (ChartItem item : graphItems) {
-            if (item.itemValue > MaxValueDisplay) MaxValueDisplay = item.itemValue;
-            if (item.itemValue < MinValueDisplay) MinValueDisplay = item.itemValue;
+        List<ChartItem> chartItems = null;
+
+        int numberOfDataPoints = 0;
+
+        // This loop is only to find minimum and maximum values
+        if (stockResponse.getTimeSeriesItems() != null && stockResponse.getTimeSeriesItems().size() > 0) {
+
+            chartItems = new ArrayList<>();
+            Iterator<TimeSeriesItem> timeSeriesIterator = stockResponse.getTimeSeriesItems().iterator();
+            ChartItem chartItem = null;
+            TimeSeriesItem timeSeriesItem = null;
+            while (timeSeriesIterator.hasNext()) {
+                timeSeriesItem = timeSeriesIterator.next();
+                chartItem = new ChartItem();
+
+                chartItem.highWickTip = timeSeriesItem.getHigh().floatValue();
+                chartItem.lowWickTip = timeSeriesItem.getLow().floatValue();
+
+                if (chartItem.highWickTip > MaxValueDisplay) MaxValueDisplay = chartItem.highWickTip;
+                if (chartItem.lowWickTip < MinValueDisplay) MinValueDisplay = chartItem.lowWickTip;
+                numberOfDataPoints++;
+            }
         }
 
+        // Prep for the scale calculation and then for the main loop
         leftMargin = String.valueOf(GraphChart.MaxValueDisplay).length() * approximateCharacterWidth;
-        if (leftMargin < minMarginSize)
-
+        if (leftMargin < minMarginSize) {
             leftMargin = minMarginSize;
+        }
 
         graphChartBounds = new RectF(componentBounds.left + leftMargin, componentBounds.top + topMargin, componentBounds.right - rightMargin, componentBounds.bottom - bottomMargin);
 
         // Lay out the child view that actually draws the graph.
         graphChartView.layout((int) graphChartBounds.left, (int) graphChartBounds.top, (int) graphChartBounds.right, (int) graphChartBounds.bottom);
 
-        int numberOfDataPoints = graphItems.size();
+//        int numberOfDataPoints = graphItems.size();
         double yOrigin = boxLineThickness / 2;
         int xOrigin = boxLineThickness / 2;
 
-        double graphLineScaleFactor = (graphChartBounds.width() - boxLineThickness) / (numberOfDataPoints - 1);
+        // Horizontal scale
+        double graphLineScaleFactor = (graphChartBounds.width() - boxLineThickness - barWidth) / (numberOfDataPoints - 1);
+
+        // Vertical scale
         double valueScaleFactor = (graphChartBounds.height() - boxLineThickness) / (GraphChart.MaxValueDisplay - GraphChart.MinValueDisplay);
 
-        int cnt = 0;
-        for (ChartItem item : graphItems) {
-            item.left = (float) (xOrigin + (graphLineScaleFactor * cnt));
-            item.right = item.left + barWidth;
-            item.top = graphChartBounds.height() - (float) ((valueScaleFactor * item.itemValue) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
 
-            item.bottom = graphChartBounds.height();
-            item.color = graphColor;
-            cnt++;
+
+        // Main loop to create chart items with pre-calculated points
+        if (stockResponse.getTimeSeriesItems() != null && stockResponse.getTimeSeriesItems().size() > 0) {
+            chartItems = new ArrayList<>();
+
+            Iterator<TimeSeriesItem> timeSeriesIterator = stockResponse.getTimeSeriesItems().iterator();
+
+            int cnt = 0;
+            while (timeSeriesIterator.hasNext()) {
+                TimeSeriesItem timeSeriesItem = timeSeriesIterator.next();
+                ChartItem chartItem = new ChartItem();
+
+                chartItem.left = (float) (xOrigin + (graphLineScaleFactor * cnt));
+                chartItem.right = chartItem.left + barWidth;
+                chartItem.middle = chartItem.left + barWidth/2;
+                if (timeSeriesItem.getClose() >= timeSeriesItem.getOpen()) {
+                    chartItem.upDownMarket = GraphChart.upMarket;
+
+                    chartItem.top = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getClose().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                    chartItem.bottom = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getOpen().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+
+                    // the rectangle for th candlestick must have a minimum dimension
+                    // when the top is calculated to be the same as the bottom rectangle will not draw
+                    // in that case we need to add an arbitrary value to the bottom to draw a rectangle
+                    // thickness of say 2 pixels
+                    if (  (int)chartItem.top == (int)chartItem.bottom  )
+                    {
+                        chartItem.bottom = chartItem.bottom + 2;
+                    }
+
+
+                    chartItem.highWickBase = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getClose().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                    chartItem.lowWickBase = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getOpen().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+
+                } else {
+
+                    chartItem.upDownMarket = GraphChart.downMarket;
+
+                    chartItem.top = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getOpen().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                    chartItem.bottom = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getClose().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                    chartItem.highWickBase = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getOpen().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                    chartItem.lowWickBase = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getClose().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                }
+
+                chartItem.highWickTip = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getHigh().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+                chartItem.lowWickTip = graphChartBounds.height() - (float) ((valueScaleFactor * timeSeriesItem.getLow().floatValue()) - (valueScaleFactor * GraphChart.MinValueDisplay) + yOrigin);
+
+                chartItem.date = (Date) timeSeriesItem.getDate().clone();
+                if(chartItem.upDownMarket == GraphChart.downMarket)
+                {
+                    chartItem.color = Color.RED;
+                } else
+                {
+                    chartItem.color = graphColor;
+                }
+
+                chartItems.add(chartItem);
+
+                cnt++;
+            }
         }
-    }
 
+        return chartItems;
+    }
 
     //
     // Measurement functions. This example uses a simple heuristic: it assumes that
@@ -358,9 +434,10 @@ public class GraphChart extends ViewGroup {
 
         if (stockResponse != null && this.graphItems != null) {
             this.graphItems.clear();
-            this.graphItems = GraphChart.convertGraphData(stockResponse);
+
+            this.graphItems = recalculateGraph(stockResponse);
             graphChartView.updateData(this.graphItems);
-            recalculateGraph();
+
             changeGraphType(GraphChart.graphDisplayType);
             float xpad = (float) (getPaddingLeft() + getPaddingRight());
             float ypad = (float) (getPaddingTop() + getPaddingBottom());
@@ -389,69 +466,6 @@ public class GraphChart extends ViewGroup {
         this.invalidate();
         graphChartView.invalidate();
 
-    }
-
-    //
-    // Extracts individual data items from the stockResponse and converts them to ChartItems
-    // that are then drawn directly in the onDraw() method of the GraphChartView class.
-    //
-    // TimeSeriesItem from stockResponse is converted into ChartItem
-    //
-    //
-    public static List<ChartItem> convertGraphData(StockResponse stockResponse) {
-        List<ChartItem> chartItems = null;
-
-        int chainCnt = 1;
-        MaxValueDisplay = Double.MIN_VALUE;
-        MinValueDisplay = Double.MAX_VALUE;
-        MaxValueReal = MaxValueDisplay;
-
-        int indIdx = 0;
-        if (stockResponse.getTimeSeriesItems() != null && stockResponse.getTimeSeriesItems().size() > 0) {
-            chartItems = new ArrayList<>();
-
-            Iterator<TimeSeriesItem> timeSeriesIterator = stockResponse.getTimeSeriesItems().iterator();
-            while (timeSeriesIterator.hasNext()) {
-                TimeSeriesItem timeSeriesItem = timeSeriesIterator.next();
-                ChartItem chartItem = new ChartItem();
-
-                ChartItem indItem1 = new ChartItem();
-                ChartItem indItem2 = new ChartItem();
-                ChartItem indItem3 = new ChartItem();
-
-                // switch statement with int data type
-                switch (GraphChart.graphDataUsed) {
-                    case StockResponse.GRAPH_LOW:
-                        chartItem.itemValue = timeSeriesItem.getLow();
-                        break;
-                    case StockResponse.GRAPH_HIGH:
-                        chartItem.itemValue = timeSeriesItem.getHigh();
-                        break;
-                    case StockResponse.GRAPH_OPEN:
-                        chartItem.itemValue = timeSeriesItem.getOpen();
-                        break;
-                    case StockResponse.GRAPH_CLOSE:
-                        chartItem.itemValue = timeSeriesItem.getClose();
-                        break;
-                    case StockResponse.GRAPH_VOLUME:
-                        chartItem.itemValue = timeSeriesItem.getVolume();
-                        break;
-                    default:
-                        chartItem.itemValue = timeSeriesItem.getLow();
-                        break;
-                }
-                if (chartItem.itemValue > MaxValueDisplay) MaxValueDisplay = chartItem.itemValue;
-                if (chartItem.itemValue < MinValueDisplay) MinValueDisplay = chartItem.itemValue;
-                chartItem.date = (Date) timeSeriesItem.getDate().clone();
-                chartItems.add(chartItem);
-
-            }
-        }
-
-        MaxValueReal = MaxValueDisplay;
-        double originalMaxValue = MaxValueDisplay;
-
-        return chartItems;
     }
 
 }

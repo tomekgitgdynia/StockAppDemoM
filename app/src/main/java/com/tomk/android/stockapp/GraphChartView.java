@@ -2,6 +2,7 @@ package com.tomk.android.stockapp;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
@@ -24,9 +25,10 @@ public class GraphChartView extends View {
     private int diagramType = GraphChart.BAR_GRAPH;
 
     private final int strokeWidth = 2;
-
-
     final Paint polyPaint = new Paint();
+
+    public int polyFillColor = 0;
+    public int standardGraphColor = 0;
 
     /**
      * Construct a GraphChartView
@@ -36,10 +38,15 @@ public class GraphChartView extends View {
     public GraphChartView(Context context, List<ChartItem> chartItems) {
         super(context);
         this.chartItems = chartItems;
+
+        polyFillColor = ContextCompat.getColor(getContext(), android.R.color.holo_blue_light);
+        standardGraphColor = ContextCompat.getColor(getContext(), android.R.color.holo_green_light);
+
+
         graphPaint = new Paint();
         graphPaint.setAlpha(150);
 
-        polyPaint.setColor(ContextCompat.getColor(getContext(), android.R.color.holo_blue_light));
+        polyPaint.setColor(polyFillColor);
         polyPaint.setAlpha(100);
         polyPaint.setStyle(Paint.Style.FILL_AND_STROKE);
     }
@@ -61,7 +68,7 @@ public class GraphChartView extends View {
                 drawPoly(canvas, chartItems);
                 int cnt = 0;
                 for (ChartItem it : chartItems) {
-                    graphPaint.setColor(it.color);
+                    graphPaint.setColor(standardGraphColor);
                     graphPaint.setStrokeWidth(strokeWidth);
                     canvas.drawLine(oldLeft, oldTop, it.left, it.top, graphPaint);
                     cnt++;
@@ -72,17 +79,19 @@ public class GraphChartView extends View {
                 int cnt = 0;
                 for (ChartItem it : chartItems) {
                     graphPaint.setStrokeWidth(strokeWidth);
-                    graphPaint.setColor(it.color);
+                    graphPaint.setColor(standardGraphColor);
 
                     if (diagramType == GraphChart.BAR_GRAPH) {
                         graphPaint.setStrokeWidth(1);
-                        canvas.drawRect(it.left, it.top, it.right, it.bottom, graphPaint);
+                        canvas.drawRect(it.left, it.top, it.right, graphBounds.bottom, graphPaint);
                     } else if (diagramType == GraphChart.LINEAR_GRAPH) {
-
                         if (cnt == 0) {
+//                            canvas.drawCircle(it.left, it.top, 10, graphPaint); // for testing
                             canvas.drawPoint(it.left, it.top, graphPaint);
                         } else {
                             canvas.drawLine(oldLeft, oldTop, it.left, it.top, graphPaint);
+//                            canvas.drawCircle(it.left, it.top, 10, graphPaint);
+
                         }
                         oldTop = it.top;
                         oldLeft = it.left;
@@ -97,7 +106,29 @@ public class GraphChartView extends View {
                         }
                         oldTop = it.top;
                         oldLeft = it.left;
-                    } else
+                    } else if (diagramType == GraphChart.CANDLE_STICK_GRAPH) {
+
+//                        graphPaint.setColor(Color.CYAN);
+//                        canvas.drawCircle(it.left, it.top, 5, graphPaint);
+//                        graphPaint.setColor(Color.RED);
+//                        canvas.drawCircle(it.left, it.bottom, 5, graphPaint);
+//                        graphPaint.setColor(Color.YELLOW);
+//                        canvas.drawCircle(it.right, it.top, 5, graphPaint);
+//                        graphPaint.setColor(Color.WHITE);
+//                        canvas.drawCircle(it.right, it.bottom, 5, graphPaint);
+
+                        graphPaint.setColor(it.color);
+                        graphPaint.setStrokeWidth(3);
+
+                        canvas.drawRect(it.left, it.top, it.right, it.bottom, graphPaint);
+
+                        canvas.drawLine(it.middle, it.top, it.middle, it.highWickTip, graphPaint);
+                        canvas.drawLine(it.middle, it.bottom, it.middle, it.highWickBase, graphPaint);
+
+                        canvas.drawLine(it.middle, it.bottom, it.middle, it.lowWickTip, graphPaint);
+                        canvas.drawLine(it.middle, it.bottom, it.middle, it.lowWickBase, graphPaint);
+
+                    } else // effectively default becomes a point graph
                     {
                         canvas.drawPoint(it.left, it.top, graphPaint);
                     }

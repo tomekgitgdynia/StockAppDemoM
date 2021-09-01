@@ -7,6 +7,7 @@ import com.tomk.android.stockapp.MainActivity;
 import java.io.IOException;
 import java.io.InputStream;
 
+import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
@@ -41,10 +42,13 @@ public class StockSymbolHttpClient {
 
         StockDataApiInterface apiService = retrofit.create(StockDataApiInterface.class);
         Call<ResponseBody> call = apiService.getStockData(stockSymbol, interval, outputSize, apiKey);
+        HttpUrl ares = call.request().url();
+        System.out.println( " ------------------ query string ------------------- " + ares);
         retrofit2.Response<ResponseBody> response = null;
         String responseBodyString = null;
         try {
             response = call.execute();
+
             if (response.code() == GOOD_CONNECTION) {
                 ResponseBody rb = response.body();
                 responseBodyString = response.body().string();
@@ -57,8 +61,5 @@ public class StockSymbolHttpClient {
             Log.e("DEBUG", "Network call failed ");
             return returnErrorMessage;
         }
-
     }
-
-
 }

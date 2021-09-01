@@ -10,4 +10,9 @@
     <string name="AREA_GRAPH">AREA GRAPH</string>
     <string name="Refreshed">Refreshed</string>
     <string name="Company_name">Company name</string>
+    <string name="Candle_Graph">Candle Graph</string>
+    <string name="Enter_api_kay">Enter API key</string>
+    <string name="Select_data_source">Select data source</string>
+    <string name="Save_in_database">Save in database</string>
+    <string name="Enter_stock_symbol">Enter stock symbol</string>
 </resources>

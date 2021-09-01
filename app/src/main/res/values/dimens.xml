@@ -1,1 +1,10 @@
-<resources></resources>
+<resources>
+
+    <dimen name="fab_margin">10dp</dimen>
+    <dimen name="standard_21">21dp</dimen>
+    <dimen name="standard_45">30dp</dimen>
+    <dimen name="standard_55">55dp</dimen>
+    <dimen name="standard_105">105dp</dimen>
+    <dimen name="standard_155">155dp</dimen>
+
+</resources>
